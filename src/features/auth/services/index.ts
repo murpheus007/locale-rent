@@ -6,6 +6,13 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
+function getRedirectUrl(): string {
+  // Use env var if set (for production), otherwise fall back to window.origin (for dev)
+  return process.env.NEXT_PUBLIC_APP_URL
+    || process.env.NEXT_PUBLIC_SITE_URL
+    || (typeof window !== "undefined" ? window.location.origin : "https://locale-rent.vercel.app");
+}
+
 export async function signUp(input: SignUpInput) {
   const { email, password, fullName, preferredLanguage } = input;
   const { data, error } = await supabase.auth.signUp({
@@ -16,7 +23,7 @@ export async function signUp(input: SignUpInput) {
         full_name: fullName ?? "",
         preferred_language: preferredLanguage ?? "en",
       },
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
+      emailRedirectTo: `${getRedirectUrl()}/auth/callback`,
     },
   });
   if (error) throw error;
@@ -34,15 +41,13 @@ export async function signIn(input: SignInInput) {
 }
 
 export async function signInWithMagicLink(input: MagicLinkInput) {
-  const { email } = input;
-  const { data, error } = await supabase.auth.signInWithOtp({
-    email,
+  const { error } = await supabase.auth.signInWithOtp({
+    email: input.email,
     options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
+      emailRedirectTo: `${getRedirectUrl()}/auth/callback`,
     },
   });
   if (error) throw error;
-  return data;
 }
 
 export async function signOut() {

@@ -40,7 +40,8 @@ export default function OnboardingPage() {
         throw new Error(data.error || "Failed to save profile");
       }
 
-      router.replace("/dashboard");
+      const locale = window.location.pathname.match(/^\/(en|fr|de)(\/|$)/)?.[1] ?? "en";
+      router.replace(`/${locale}/dashboard`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

@@ -5,6 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { signIn, signInWithMagicLink } from "@/features/auth/services";
 import type { SignInInput, MagicLinkInput } from "@/features/auth/types";
 import { useState } from "react";
+import Link from "next/link";
 
 export function SignInForm() {
   const [email, setEmail] = useState("");
@@ -89,6 +90,12 @@ export function SignInForm() {
           >
             Send magic link
           </button>
+        </div>
+
+        <div className="text-center text-sm">
+          <Link href="/auth/forgot-password" className="text-mid hover:text-primary transition-colors">
+            Forgot your password?
+          </Link>
         </div>
       </CardContent>
     </Card>

@@ -1,6 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+function getLocaleFromPathname(pathname: string): string {
+  const match = pathname.match(/^\/(en|fr|de)(\/|$)/);
+  return match?.[1] ?? "en";
+}
 
 export default function VerifyPage() {
+  const pathname = usePathname();
+  const locale = getLocaleFromPathname(pathname);
+
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-6 py-16 bg-light">
       <div className="w-full max-w-md text-center space-y-4">
@@ -8,7 +19,7 @@ export default function VerifyPage() {
         <p className="text-mid">
           Please check your email for a verification link. Once verified, you can sign in to your account.
         </p>
-        <Link href="/auth/signin" className="text-primary underline inline-block mt-4">
+        <Link href={`/${locale}/auth/signin`} className="text-primary underline inline-block mt-4">
           Back to sign in
         </Link>
       </div>

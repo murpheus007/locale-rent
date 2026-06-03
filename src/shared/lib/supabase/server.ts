@@ -15,28 +15,17 @@ export async function createClient() {
           try {
             cookieStore.set({ name, value, ...options });
           } catch {
-            // Handle server component cookie setting
+            // Server component context
           }
         },
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: "", ...options });
           } catch {
-            // Handle server component cookie removal
+            // Server component context
           }
         },
       },
     }
   );
-}
-
-export async function getSession() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getSession();
-  return data.session;
-}
-
-export async function getUser() {
-  const session = await getSession();
-  return session?.user ?? null;
 }
