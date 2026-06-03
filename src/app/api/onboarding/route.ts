@@ -5,7 +5,17 @@ import { cookies } from "next/headers";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { fullName, role, isHost, preferredLanguage } = body;
+    const {
+      fullName,
+      role,
+      isHost,
+      preferredLanguage,
+      bio,
+      phone,
+      city,
+      country,
+      avatarUrl,
+    } = body;
 
     if (!fullName || typeof fullName !== "string" || !fullName.trim()) {
       return NextResponse.json({ error: "Full name is required" }, { status: 400 });
@@ -24,14 +34,14 @@ export async function POST(request: Request) {
             try {
               cookieStore.set({ name, value, ...options });
             } catch {
-              // Server component cookie setting
+              // Server component context
             }
           },
           remove(name: string, options: CookieOptions) {
             try {
               cookieStore.set({ name, value: "", ...options });
             } catch {
-              // Server component cookie removal
+              // Server component context
             }
           },
         },
@@ -47,6 +57,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Update profiles table
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
@@ -54,11 +65,30 @@ export async function POST(request: Request) {
         role: role === "host" ? "host" : "user",
         is_host: isHost === true,
         preferred_language: preferredLanguage || "en",
+        bio: bio?.trim() || null,
+        phone: phone?.trim() || null,
+        city: city?.trim() || null,
+        country: country?.trim() || null,
+        avatar_url: avatarUrl || null,
       })
       .eq("user_id", user.id);
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+
+    // Also update user_metadata so middleware check works consistently
+    const { error: metaError } = await supabase.auth.updateUser({
+      data: {
+        full_name: fullName.trim(),
+        role: role === "host" ? "host" : "user",
+        preferred_language: preferredLanguage || "en",
+      },
+    });
+
+    if (metaError) {
+      // Don't fail the whole request if metadata update fails
+      console.error("Failed to update user metadata:", metaError.message);
     }
 
     return NextResponse.json({ success: true });

@@ -133,7 +133,14 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from guest-only routes
   if (session && isGuestOnly) {
-    const needsOnboarding = !session.user.user_metadata?.full_name;
+    // Check if user has completed onboarding by looking at profiles table
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", session.user.id)
+      .single();
+
+    const needsOnboarding = !profile?.full_name;
     if (needsOnboarding && pathnameWithoutLocale !== "/onboarding") {
       return NextResponse.redirect(
         new URL(`/${locale}/onboarding`, request.url)
