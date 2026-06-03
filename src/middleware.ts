@@ -3,6 +3,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 // Routes that don't require authentication (without locale prefix — checked dynamically)
 const PUBLIC_ROUTES = [
+  "/",
   "/auth/signin",
   "/auth/signup",
   "/auth/callback",
@@ -12,6 +13,7 @@ const PUBLIC_ROUTES = [
   "/faq",
   "/contact",
   "/pricing",
+  "/property",
 ];
 
 // Routes that should redirect to dashboard if already authenticated
