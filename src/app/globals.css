@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/* ============================================
+   LocaleRent Color System — Tailwind v4 @theme
+   ============================================ */
+
+@theme {
+  /* --- Primary: Deep Teal --- */
+  --color-primary: #0D7377;
+  --color-primary-dark: #095456;
+  --color-primary-light: #E6F2F2;
+  --color-primary-foreground: #FFFFFF;
+
+  /* --- Secondary: Warm Coral --- */
+  --color-secondary: #FF6B6B;
+  --color-secondary-dark: #E55A5A;
+  --color-secondary-light: #FFF0F0;
+  --color-secondary-foreground: #FFFFFF;
+
+  /* --- Accent: Gold --- */
+  --color-accent: #F4A261;
+  --color-accent-dark: #E08E4C;
+  --color-accent-light: #FDF3E8;
+  --color-accent-foreground: #1A1A2E;
+
+  /* --- Neutrals --- */
+  --color-dark: #1A1A2E;
+  --color-mid: #6B7280;
+  --color-light: #F8F9FA;
+  --color-white: #FFFFFF;
+
+  /* --- Semantic --- */
+  --color-success: #10B981;
+  --color-success-light: #ECFDF5;
+  --color-success-foreground: #FFFFFF;
+  --color-error: #EF4444;
+  --color-error-light: #FEF2F2;
+  --color-error-foreground: #FFFFFF;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FFFBEB;
+  --color-warning-foreground: #1A1A2E;
+
+  /* --- Base surface tokens --- */
+  --color-background: var(--color-white);
+  --color-foreground: var(--color-dark);
+  --color-card: var(--color-white);
+  --color-card-foreground: var(--color-dark);
+  --color-popover: var(--color-white);
+  --color-popover-foreground: var(--color-dark);
+  --color-muted: var(--color-light);
+  --color-muted-foreground: var(--color-mid);
+  --color-border: #E5E7EB;
+  --color-input: #E5E7EB;
+  --color-ring: var(--color-primary);
+
+  /* --- Radii --- */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+}
+
+/* ============================================
+   Base layer
+   ============================================ */
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* ============================================
+   Dark mode
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #0F172A;
+    --color-foreground: #F1F5F9;
+    --color-card: #1E293B;
+    --color-card-foreground: #F1F5F9;
+    --color-popover: #1E293B;
+    --color-popover-foreground: #F1F5F9;
+    --color-muted: #1E293B;
+    --color-muted-foreground: #94A3B8;
+    --color-border: #334155;
+    --color-input: #334155;
+    --color-ring: #14B5B8;
+    --color-primary: #14B5B8;
+    --color-primary-dark: #0D7377;
+    --color-primary-light: #134E4A;
+    --color-secondary: #FF6B6B;
+    --color-secondary-dark: #E55A5A;
+    --color-secondary-light: #451A1A;
+    --color-accent: #F4A261;
+    --color-accent-dark: #E08E4C;
+    --color-accent-light: #452A0A;
+    --color-success: #34D399;
+    --color-success-light: #064E3B;
+    --color-error: #F87171;
+    --color-error-light: #451A1A;
+    --color-warning: #FBBF24;
+    --color-warning-light: #451A03;
+  }
+}

@@ -50,6 +50,11 @@ next-env.d.ts
 # supabase local
 .supabase/
 supabase/.cache/
+# Supabase temp/logs
+supabase/.temp/
+supabase/*.log
+supabase-start*.log
+supabase-db-reset*.log
 
 # caches
 .cache/

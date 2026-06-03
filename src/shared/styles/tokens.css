@@ -1,0 +1,69 @@
+/**
+ * LocaleRent CSS Custom Properties
+ * 
+ * These are the raw design tokens. Use these in inline styles,
+ * CSS modules, or when Tailwind utilities aren't practical.
+ * 
+ * For component classes, prefer Tailwind utilities:
+ *   bg-primary, text-dark, border-secondary, etc.
+ * 
+ * Dark mode: add class="dark" to <html> or use @media (prefers-color-scheme: dark)
+ */
+
+:root {
+  /* Primary — Deep Teal */
+  --clr-primary: #0D7377;
+  --clr-primary-dark: #095456;
+  --clr-primary-light: #E6F2F2;
+  --clr-primary-fg: #FFFFFF;
+
+  /* Secondary — Warm Coral */
+  --clr-secondary: #FF6B6B;
+  --clr-secondary-dark: #E55A5A;
+  --clr-secondary-light: #FFF0F0;
+  --clr-secondary-fg: #FFFFFF;
+
+  /* Accent — Gold */
+  --clr-accent: #F4A261;
+  --clr-accent-dark: #E08E4C;
+  --clr-accent-light: #FDF3E8;
+  --clr-accent-fg: #1A1A2E;
+
+  /* Neutrals */
+  --clr-dark: #1A1A2E;
+  --clr-mid: #6B7280;
+  --clr-light: #F8F9FA;
+  --clr-white: #FFFFFF;
+
+  /* Semantic */
+  --clr-success: #10B981;
+  --clr-success-light: #ECFDF5;
+  --clr-error: #EF4444;
+  --clr-error-light: #FEF2F2;
+  --clr-warning: #F59E0B;
+  --clr-warning-light: #FFFBEB;
+}
+
+/* Class-based dark mode toggle */
+.dark {
+  --clr-primary: #14B5B8;
+  --clr-primary-dark: #0D7377;
+  --clr-primary-light: #134E4A;
+  --clr-primary-fg: #0F172A;
+  --clr-secondary: #FF6B6B;
+  --clr-secondary-dark: #E55A5A;
+  --clr-secondary-light: #451A1A;
+  --clr-accent: #F4A261;
+  --clr-accent-dark: #E08E4C;
+  --clr-accent-light: #452A0A;
+  --clr-dark: #F1F5F9;
+  --clr-mid: #94A3B8;
+  --clr-light: #1E293B;
+  --clr-white: #0F172A;
+  --clr-success: #34D399;
+  --clr-success-light: #064E3B;
+  --clr-error: #F87171;
+  --clr-error-light: #451A1A;
+  --clr-warning: #FBBF24;
+  --clr-warning-light: #451A03;
+}

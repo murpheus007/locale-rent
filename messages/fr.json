@@ -1,0 +1,15 @@
+{
+  "common": {
+    "siteName": "LocaleRent",
+    "tagline": "Trouvez votre séjour parfait, partout dans le monde"
+  },
+  "nav": {
+    "discover": "Explorer",
+    "howItWorks": "Comment ça marche",
+    "hosts": "Hôtes",
+    "faq": "FAQ",
+    "listYourProperty": "Louer votre bien",
+    "signIn": "Connexion",
+    "signUp": "Commencer"
+  }
+}

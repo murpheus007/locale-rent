@@ -1,0 +1,15 @@
+{
+  "common": {
+    "siteName": "LocaleRent",
+    "tagline": "Finden Sie Ihren perfekten Aufenthalt, überall auf der Welt"
+  },
+  "nav": {
+    "discover": "Entdecken",
+    "howItWorks": "So funktioniert's",
+    "hosts": "Vermieter",
+    "faq": "FAQ",
+    "listYourProperty": "Immobilie einstellen",
+    "signIn": "Anmelden",
+    "signUp": "Loslegen"
+  }
+}
