@@ -1,10 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { createMiddleware as createIntlMiddleware } from "next-intl/middleware";
 import { routing } from "@/shared/i18n/routing";
-
-// Create the next-intl middleware
-const intlMiddleware = createIntlMiddleware(routing);
 
 // Routes that don't require authentication (without locale prefix)
 const PUBLIC_ROUTES = [
@@ -37,19 +33,52 @@ const AUTH_ROUTES = [
   "/dashboard/settings",
 ];
 
+function getLocaleFromPathname(pathname: string): string {
+  const match = pathname.match(/^\/(en|fr|de)(\/|$)/);
+  return match?.[1] ?? "";
+}
+
+function stripLocale(pathname: string): string {
+  return pathname.replace(/^\/(en|fr|de)/, "") || "/";
+}
+
+function detectLocale(request: NextRequest): string {
+  // Check cookie first
+  const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
+  if (cookieLocale && routing.locales.includes(cookieLocale as any)) {
+    return cookieLocale;
+  }
+
+  // Check Accept-Language header
+  const acceptLanguage = request.headers.get("accept-language");
+  if (acceptLanguage) {
+    const preferred = acceptLanguage.split(",")[0].split("-")[0].trim();
+    if (routing.locales.includes(preferred as any)) {
+      return preferred;
+    }
+  }
+
+  return routing.defaultLocale;
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Step 1: Let next-intl handle locale detection and redirect
-  // This ensures / -> /en (or /fr, /de) based on browser language
-  const intlResponse = intlMiddleware(request);
+  // Step 1: Handle locale redirect for paths without locale prefix
+  const hasLocale = /^\/(en|fr|de)(\/|$)/.test(pathname);
+  const isStaticAsset = /\.(svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot)$/.test(pathname);
+  const isNextInternal = pathname.startsWith("/_next") || pathname.startsWith("/api");
 
-  // If next-intl issued a redirect (e.g. / -> /en), return it immediately
-  if (intlResponse.headers.get("location")) {
-    return intlResponse;
+  if (!hasLocale && !isStaticAsset && !isNextInternal) {
+    const locale = detectLocale(request);
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}${pathname}`;
+    const response = NextResponse.redirect(url);
+    response.cookies.set("NEXT_LOCALE", locale, { path: "/", maxAge: 60 * 60 * 24 * 365 });
+    return response;
   }
 
-  // Step 2: Auth checks on the locale-prefixed pathname
+  // Step 2: Auth checks
   let response = NextResponse.next({
     request: { headers: request.headers },
   });
@@ -81,13 +110,8 @@ export async function middleware(request: NextRequest) {
   );
 
   const { data: { session } } = await supabase.auth.getSession();
-
-  // Strip locale prefix for route matching
-  const localeMatch = pathname.match(/^\/(en|fr|de)(\/|$)/);
-  const pathnameWithoutLocale = localeMatch
-    ? pathname.replace(/^\/(en|fr|de)/, "") || "/"
-    : pathname;
-  const locale = localeMatch?.[1] ?? "en";
+  const pathnameWithoutLocale = stripLocale(pathname);
+  const locale = getLocaleFromPathname(pathname) || detectLocale(request);
 
   const isPublicRoute = PUBLIC_ROUTES.some(
     (route) =>
