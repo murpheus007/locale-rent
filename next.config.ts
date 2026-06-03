@@ -5,7 +5,7 @@ const withNextIntl = createNextIntlPlugin('./src/shared/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   turbopack: {
-    root: '/home/murpheus/Nextjs/locale-rent',
+    root: '/home/clawbot/locale-rent',
   },
 };
 

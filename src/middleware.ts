@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-// Routes that don't require authentication
+// Routes that don't require authentication (without locale prefix — checked dynamically)
 const PUBLIC_ROUTES = [
-  "/",
   "/auth/signin",
   "/auth/signup",
   "/auth/callback",
@@ -66,29 +65,36 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession();
   const pathname = request.nextUrl.pathname;
 
+  // Strip locale prefix for route matching (e.g. /en/auth/signin -> /auth/signin)
+  const localeMatch = pathname.match(/^\/(en|fr|de)(\/|$)/);
+  const pathnameWithoutLocale = localeMatch ? pathname.replace(/^\/(en|fr|de)/, '') || '/' : pathname;
+
   const isPublicRoute = PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(route + "/")
+    (route) => pathnameWithoutLocale === route || pathnameWithoutLocale.startsWith(route + "/")
   );
   const isGuestOnly = GUEST_ONLY_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(route + "/")
+    (route) => pathnameWithoutLocale === route || pathnameWithoutLocale.startsWith(route + "/")
   );
   const isAuthRoute = AUTH_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(route + "/")
+    (route) => pathnameWithoutLocale === route || pathnameWithoutLocale.startsWith(route + "/")
   );
 
   // Redirect authenticated users away from guest-only routes
   if (session && isGuestOnly) {
     // Check if profile needs onboarding
     const needsOnboarding = !session.user.user_metadata?.full_name;
-    if (needsOnboarding && pathname !== "/onboarding") {
-      return NextResponse.redirect(new URL("/onboarding", request.url));
+    const locale = pathname.split('/')[1] || 'en';
+    if (needsOnboarding && pathname !== `/${locale}/onboarding`) {
+      return NextResponse.redirect(new URL(`/${locale}/onboarding`, request.url));
     }
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
   }
 
   // Redirect unauthenticated users to sign-in for protected routes
   if (!session && (isAuthRoute || !isPublicRoute)) {
-    const redirectUrl = new URL("/auth/signin", request.url);
+    // Extract locale from pathname (e.g. /en/dashboard -> en)
+    const locale = pathname.split('/')[1] || 'en';
+    const redirectUrl = new URL(`/${locale}/auth/signin`, request.url);
     redirectUrl.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(redirectUrl);
   }
