@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/features/auth/services";
+
+function getLocaleFromPathname(pathname: string): string {
+  const match = pathname.match(/^\/(en|fr|de)(\/|$)/);
+  return match?.[1] ?? "en";
+}
 
 export default function AuthCallbackPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = getLocaleFromPathname(pathname);
   const [status, setStatus] = useState("Checking your sign-in…");
 
   useEffect(() => {
@@ -15,19 +22,19 @@ export default function AuthCallbackPage() {
         if (error) throw error;
         if (data.session) {
           setStatus("Sign-in confirmed. Redirecting…");
-          router.replace("/dashboard");
+          router.replace(`/${locale}/dashboard`);
         } else {
           setStatus("No session found. Redirecting to sign in…");
-          router.replace("/auth/signin");
+          router.replace(`/${locale}/auth/signin`);
         }
       } catch {
         setStatus("Something went wrong. Redirecting to sign in…");
-        router.replace("/auth/signin");
+        router.replace(`/${locale}/auth/signin`);
       }
     }
     const timer = setTimeout(handleCallback, 500);
     return () => clearTimeout(timer);
-  }, [router]);
+  }, [router, locale]);
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-6 py-16 bg-light">

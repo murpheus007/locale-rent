@@ -20,7 +20,8 @@ export function SignInForm() {
     try {
       const input: SignInInput = { email, password };
       await signIn(input);
-      window.location.href = "/";
+      const locale = window.location.pathname.match(/^\/(en|fr|de)(\/|$)/)?.[1] ?? "en";
+      window.location.href = `/${locale}/dashboard`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
     } finally {
