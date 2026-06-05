@@ -1,3 +1,5 @@
+import ListingForm from "../listing-form";
+
 export default function NewListingPage() {
-  return <div>NewListingPage Placeholder</div>;
+  return <ListingForm mode="create" />;
 }
