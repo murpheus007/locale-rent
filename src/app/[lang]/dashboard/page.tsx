@@ -16,6 +16,8 @@ import {
   ArrowRight,
   TrendingUp,
   Clock,
+  Search,
+  Shield,
 } from "lucide-react";
 import { useProfile, useDashboardStats, useRecentActivity } from "@/features/dashboard/hooks";
 
@@ -47,7 +49,7 @@ function formatDate(dateStr: string) {
 
 const STAT_CARDS = [
   { key: "totalListings", label: "Listings", icon: Home, color: "bg-primary/10 text-primary" },
-  { key: "activeBookings", label: "Active Bookings", icon: Calendar, color: "bg-secondary/10 text-secondary" },
+  { key: "activeBookings", label: "Bookings", icon: Calendar, color: "bg-secondary/10 text-secondary" },
   { key: "totalReviews", label: "Reviews", icon: Star, color: "bg-accent/10 text-accent-dark" },
   { key: "totalFavorites", label: "Favorites", icon: Heart, color: "bg-error/10 text-error" },
 ] as const;
@@ -146,6 +148,18 @@ export default function DashboardPage() {
                 </Link>
               )}
               <Link
+                href={`/${locale}/search`}
+                className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-primary-light/30 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Search className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium text-dark">Browse properties</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-mid group-hover:text-primary transition-colors" />
+              </Link>
+              <Link
                 href={`/${locale}/dashboard/bookings`}
                 className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-primary-light/30 transition-colors group"
               >
@@ -178,7 +192,7 @@ export default function DashboardPage() {
                     <Star className="w-4 h-4 text-primary" />
                   </div>
                   <span className="text-sm font-medium text-dark">Settings</span>
-                  </div>
+                </div>
                 <ArrowRight className="w-4 h-4 text-mid group-hover:text-primary transition-colors" />
               </Link>
             </div>
@@ -283,7 +297,10 @@ export default function DashboardPage() {
         <Card className="border-primary/20 bg-primary-light/30">
           <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex-1">
-              <h3 className="font-semibold text-dark text-sm">Ready to start hosting?</h3>
+              <h3 className="font-semibold text-dark text-sm flex items-center gap-2">
+                <Shield className="w-4 h-4 text-primary" />
+                Ready to start hosting?
+              </h3>
               <p className="text-mid text-sm mt-0.5">
                 List your property and start earning. It only takes a few minutes.
               </p>
