@@ -18,8 +18,9 @@ import {
   Clock,
   Search,
   Shield,
+  LayoutDashboard,
 } from "lucide-react";
-import { useProfile, useDashboardStats, useRecentActivity } from "@/features/dashboard/hooks";
+import { useProfile, useDashboardStats, useRecentActivity, useIsHostMode } from "@/features/dashboard/hooks";
 
 function getLocaleFromPathname(pathname: string): string {
   const match = pathname.match(/^\/(en|fr|de)(\/|$)/);
@@ -47,22 +48,31 @@ function formatDate(dateStr: string) {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-const STAT_CARDS = [
-  { key: "totalListings", label: "Listings", icon: Home, color: "bg-primary/10 text-primary" },
-  { key: "activeBookings", label: "Bookings", icon: Calendar, color: "bg-secondary/10 text-secondary" },
-  { key: "totalReviews", label: "Reviews", icon: Star, color: "bg-accent/10 text-accent-dark" },
-  { key: "totalFavorites", label: "Favorites", icon: Heart, color: "bg-error/10 text-error" },
-] as const;
-
 export default function DashboardPage() {
   const pathname = usePathname();
   const locale = getLocaleFromPathname(pathname);
   const { profile, loading: profileLoading } = useProfile();
   const { stats, loading: statsLoading } = useDashboardStats();
   const { activities, loading: activityLoading } = useRecentActivity();
+  const isHostMode = useIsHostMode();
 
-  const isHost = profile?.is_host ?? false;
   const displayName = profile?.full_name?.split(" ")[0] ?? "there";
+
+  // Guest mode stats cards
+  const guestStatCards = [
+    { key: "activeBookings", label: "Active Bookings", icon: Calendar, color: "bg-secondary/10 text-secondary" },
+    { key: "totalFavorites", label: "Saved Places", icon: Heart, color: "bg-error/10 text-error" },
+    { key: "totalReviews", label: "Reviews Given", icon: Star, color: "bg-accent/10 text-accent-dark" },
+  ];
+
+  // Host mode stats cards
+  const hostStatCards = [
+    { key: "totalListings", label: "Total Listings", icon: Home, color: "bg-primary/10 text-primary" },
+    { key: "activeBookings", label: "Active Bookings", icon: Calendar, color: "bg-secondary/10 text-secondary" },
+    { key: "totalReviews", label: "Reviews Received", icon: Star, color: "bg-accent/10 text-accent-dark" },
+  ];
+
+  const statCards = isHostMode ? hostStatCards : guestStatCards;
 
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-8">
@@ -83,13 +93,13 @@ export default function DashboardPage() {
               Welcome back, {displayName}!
             </h1>
             <p className="text-mid text-sm mt-0.5">
-              {isHost
+              {isHostMode
                 ? "Here's what's happening with your properties."
                 : "Here's an overview of your activity."}
             </p>
           </div>
         </div>
-        {isHost && (
+        {isHostMode && (
           <Link href={`/${locale}/dashboard/listings/new`}>
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
@@ -100,8 +110,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {STAT_CARDS.map((stat) => {
+      <div className={`grid grid-cols-2 lg:grid-cols-${statCards.length} gap-4`}>
+        {statCards.map((stat) => {
           const Icon = stat.icon;
           const value = stats[stat.key as keyof typeof stats] ?? 0;
           return (
@@ -133,7 +143,7 @@ export default function DashboardPage() {
               Quick Actions
             </h2>
             <div className="space-y-2">
-              {isHost && (
+              {isHostMode && (
                 <Link
                   href={`/${locale}/dashboard/listings/new`}
                   className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-primary-light/30 transition-colors group"
@@ -148,26 +158,20 @@ export default function DashboardPage() {
                 </Link>
               )}
               <Link
-                href={`/${locale}/search`}
+                href={isHostMode ? `/${locale}/dashboard/bookings` : `/${locale}/search`}
                 className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-primary-light/30 transition-colors group"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Search className="w-4 h-4 text-primary" />
+                    {isHostMode ? (
+                      <Calendar className="w-4 h-4 text-primary" />
+                    ) : (
+                      <Search className="w-4 h-4 text-primary" />
+                    )}
                   </div>
-                  <span className="text-sm font-medium text-dark">Browse properties</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-mid group-hover:text-primary transition-colors" />
-              </Link>
-              <Link
-                href={`/${locale}/dashboard/bookings`}
-                className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-primary-light/30 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
-                    <Calendar className="w-4 h-4 text-secondary" />
-                  </div>
-                  <span className="text-sm font-medium text-dark">View bookings</span>
+                  <span className="text-sm font-medium text-dark">
+                    {isHostMode ? "View bookings" : "Browse properties"}
+                  </span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-mid group-hover:text-primary transition-colors" />
               </Link>
@@ -189,7 +193,7 @@ export default function DashboardPage() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Star className="w-4 h-4 text-primary" />
+                    <LayoutDashboard className="w-4 h-4 text-primary" />
                   </div>
                   <span className="text-sm font-medium text-dark">Settings</span>
                 </div>
@@ -234,12 +238,12 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-mid text-sm">No recent activity yet.</p>
                 <p className="text-mid text-xs mt-1">
-                  {isHost
+                  {isHostMode
                     ? "Create your first listing to get started!"
                     : "Start exploring properties to book your first stay."}
                 </p>
                 <div className="mt-4">
-                  {isHost ? (
+                  {isHostMode ? (
                     <Link href={`/${locale}/dashboard/listings/new`}>
                       <Button size="sm" className="gap-2">
                         <Plus className="w-4 h-4" />
@@ -292,8 +296,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Become a Host card (for guests) */}
-      {!isHost && (
+      {/* Role-specific call-to-action cards */}
+      {!isHostMode && (
         <Card className="border-primary/20 bg-primary-light/30">
           <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex-1">

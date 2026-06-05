@@ -16,14 +16,22 @@ import {
   ChevronRight,
   User,
   Shield,
+  ChevronDown,
+  ArrowLeftRight,
 } from "lucide-react";
 import { signOut } from "@/features/auth/services";
 import { useRouter } from "next/navigation";
-import { useProfile, becomeHost } from "@/features/dashboard/hooks";
+import { useProfile, useHasRole, switchRole, becomeHost } from "@/features/dashboard/hooks";
 import { useState } from "react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/components/ui/avatar";
 import { cn } from "@/shared/lib/utils/cn";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
 
 function getLocaleFromPathname(pathname: string): string {
   const match = pathname.match(/^\/(en|fr|de)(\/|$)/);
@@ -46,12 +54,21 @@ interface SidebarProps {
   onMobileClose: () => void;
 }
 
-export function DashboardSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
+export function DashboardSidebar({
+  collapsed,
+  onToggle,
+  mobileOpen,
+  onMobileClose,
+}: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const locale = getLocaleFromPathname(pathname);
   const { profile, loading: profileLoading } = useProfile();
-  const isHost = profile?.is_host ?? false;
+  const isHost = profile?.user_roles?.some((r) => r.role === "host") ?? false;
+  const isHostMode = profile?.active_role === "host";
+  const hasGuestRole = profile?.user_roles?.some((r) => r.role === "guest") ?? true; // everyone is a guest by default
+  const hasHostRole = profile?.user_roles?.some((r) => r.role === "host") ?? false;
+  const canSwitch = hasGuestRole && hasHostRole;
 
   function isActive(href: string): boolean {
     if (href === "/dashboard") {
@@ -61,6 +78,7 @@ export function DashboardSidebar({ collapsed, onToggle, mobileOpen, onMobileClos
   }
 
   const [becomingHost, setBecomingHost] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
   async function handleSignOut() {
     await signOut();
@@ -76,6 +94,20 @@ export function DashboardSidebar({ collapsed, onToggle, mobileOpen, onMobileClos
       // silently fail
     } finally {
       setBecomingHost(false);
+    }
+  }
+
+  async function handleSwitchRole(newRole: "guest" | "host") {
+    if (newRole === profile?.active_role) return;
+    
+    setSwitching(true);
+    try {
+      await switchRole(newRole);
+      router.refresh();
+    } catch {
+      // silently fail
+    } finally {
+      setSwitching(false);
     }
   }
 
@@ -125,7 +157,7 @@ export function DashboardSidebar({ collapsed, onToggle, mobileOpen, onMobileClos
         </button>
       </div>
 
-      {/* User Profile Card */}
+      {/* User Profile Card with Role Switcher */}
       <div className={cn("px-3 py-4 border-b border-border shrink-0", collapsed && "px-2")}>
         {profileLoading ? (
           <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
@@ -138,46 +170,97 @@ export function DashboardSidebar({ collapsed, onToggle, mobileOpen, onMobileClos
             )}
           </div>
         ) : (
-          <Link
-            href={`/${locale}/dashboard/settings`}
-            className={cn(
-              "flex items-center gap-3 p-2 rounded-lg hover:bg-light transition-colors group",
-              collapsed && "justify-center"
-            )}
-          >
-            <Avatar className="w-10 h-10 shrink-0">
-              {profile?.avatar_url ? (
-                <AvatarImage src={profile.avatar_url} alt={profile.full_name ?? ""} />
-              ) : (
-                <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                  {profile?.full_name ? getInitials(profile.full_name) : <User className="w-4 h-4" />}
-                </AvatarFallback>
+          <div className="space-y-3">
+            {/* Profile Link */}
+            <Link
+              href={`/${locale}/dashboard/settings`}
+              className={cn(
+                "flex items-center gap-3 p-2 rounded-lg hover:bg-light transition-colors group",
+                collapsed && "justify-center"
               )}
-            </Avatar>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-dark truncate group-hover:text-primary transition-colors">
-                  {profile?.full_name ?? "Your Profile"}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  {isHost ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                      <Shield className="w-2.5 h-2.5" /> Host
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-mid">Guest</span>
-                  )}
+            >
+              <Avatar className="w-10 h-10 shrink-0">
+                {profile?.avatar_url ? (
+                  <AvatarImage src={profile.avatar_url} alt={profile.full_name ?? ""} />
+                ) : (
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                    {profile?.full_name ? getInitials(profile.full_name) : <User className="w-4 h-4" />}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              {!collapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-dark truncate group-hover:text-primary transition-colors">
+                    {profile?.full_name ?? "Your Profile"}
+                  </p>
                 </div>
+              )}
+            </Link>
+
+            {/* Role Switcher - Fiverr Style */}
+            {!collapsed && canSwitch && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-light hover:bg-gray-100 transition-colors"
+                    disabled={switching}
+                  >
+                    {isHostMode ? (
+                      <Shield className="w-4 h-4 text-primary" />
+                    ) : (
+                      <User className="w-4 h-4 text-mid" />
+                    )}
+                    <span className="flex-1 text-left text-sm font-medium text-dark">
+                      {isHostMode ? "Host Mode" : "Guest Mode"}
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-mid" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuItem
+                    onClick={() => handleSwitchRole("guest")}
+                    disabled={profile?.active_role === "guest"}
+                    className="cursor-pointer"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Guest Mode
+                    {profile?.active_role === "guest" && <span className="ml-auto text-xs text-primary">✓</span>}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleSwitchRole("host")}
+                    disabled={profile?.active_role === "host"}
+                    className="cursor-pointer"
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    Host Mode
+                    {profile?.active_role === "host" && <span className="ml-auto text-xs text-primary">✓</span>}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* Single role badge (no switcher needed) */}
+            {!collapsed && !canSwitch && (
+              <div className="px-3 py-1.5">
+                {isHostMode ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                    <Shield className="w-3 h-3" /> Host Mode
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-mid bg-gray-100 px-2 py-1 rounded-full">
+                    <User className="w-3 h-3" /> Guest Mode
+                  </span>
+                )}
               </div>
             )}
-          </Link>
+          </div>
         )}
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
-          if (item.hostOnly && !isHost) return null;
+          if (item.hostOnly && !isHostMode) return null;
 
           const Icon = item.icon;
           const active = isActive(item.href);
@@ -204,20 +287,7 @@ export function DashboardSidebar({ collapsed, onToggle, mobileOpen, onMobileClos
 
       {/* Bottom actions */}
       <div className={cn("px-3 py-4 border-t border-border space-y-1 shrink-0", collapsed && "px-2")}>
-        {isHost ? (
-          <Link
-            href={`/${locale}/dashboard/listings/new`}
-            onClick={onMobileClose}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary-dark transition-colors",
-              collapsed && "justify-center px-2"
-            )}
-            title={collapsed ? "New Listing" : undefined}
-          >
-            <Plus className="w-5 h-5 shrink-0" />
-            {!collapsed && <span>New Listing</span>}
-          </Link>
-        ) : (
+        {!isHostMode ? (
           <button
             onClick={handleBecomeHost}
             disabled={becomingHost}
@@ -230,6 +300,19 @@ export function DashboardSidebar({ collapsed, onToggle, mobileOpen, onMobileClos
             <Home className="w-5 h-5 shrink-0" />
             {!collapsed && <span>{becomingHost ? "Activating..." : "Become a Host"}</span>}
           </button>
+        ) : (
+          <Link
+            href={`/${locale}/dashboard/listings/new`}
+            onClick={onMobileClose}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary-dark transition-colors",
+              collapsed && "justify-center px-2"
+            )}
+            title={collapsed ? "New Listing" : undefined}
+          >
+            <Plus className="w-5 h-5 shrink-0" />
+            {!collapsed && <span>New Listing</span>}
+          </Link>
         )}
         <button
           onClick={handleSignOut}
@@ -249,17 +332,13 @@ export function DashboardSidebar({ collapsed, onToggle, mobileOpen, onMobileClos
   return (
     <>
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex h-full">
-        {sidebarContent}
-      </div>
+      <div className="hidden lg:flex h-full">{sidebarContent}</div>
 
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/50" onClick={onMobileClose} />
-          <div className="relative z-10 h-full">
-            {sidebarContent}
-          </div>
+          <div className="relative z-10 h-full">{sidebarContent}</div>
         </div>
       )}
     </>

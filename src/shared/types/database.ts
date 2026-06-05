@@ -7,6 +7,7 @@ export type Json =
   | Json[];
 
 export type Role = "user" | "host" | "admin";
+export type UserRole = "guest" | "host"; // New: Fiverr-style role
 export type PropertyType = "apartment" | "house" | "villa" | "studio" | "room" | "loft" | "cabin" | "cottage" | "other";
 export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed" | "disputed";
 export type PaymentStatus = "pending" | "completed" | "failed" | "refunded" | "cancelled";
@@ -39,6 +40,8 @@ export interface Database {
           preferred_language: string;
           created_at: string;
           updated_at: string;
+          // New: Dual role system
+          active_role: UserRole | null;
         };
         Insert: {
           id?: string;
@@ -61,6 +64,7 @@ export interface Database {
           preferred_language?: string;
           created_at?: string;
           updated_at?: string;
+          active_role?: UserRole | null;
         };
         Update: {
           id?: string;
@@ -81,6 +85,79 @@ export interface Database {
           role?: Role;
           stripe_customer_id?: string | null;
           preferred_language?: string;
+          created_at?: string;
+          updated_at?: string;
+          active_role?: UserRole | null;
+        };
+      };
+      // New: User roles table (Fiverr-style dual roles)
+      user_roles: {
+        Row: {
+          id: string;
+          user_id: string;
+          role: UserRole;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          role: UserRole;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          role?: UserRole;
+          created_at?: string;
+        };
+      };
+      // New: Host profiles table
+      host_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          hosting_since: string;
+          response_rate: number;
+          response_time_minutes: number;
+          is_identity_verified: boolean;
+          is_phone_verified: boolean;
+          payout_method: Json | null;
+          total_earnings_cents: number;
+          pending_earnings_cents: number;
+          total_listings: number;
+          total_bookings_hosted: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          hosting_since?: string;
+          response_rate?: number;
+          response_time_minutes?: number;
+          is_identity_verified?: boolean;
+          is_phone_verified?: boolean;
+          payout_method?: Json | null;
+          total_earnings_cents?: number;
+          pending_earnings_cents?: number;
+          total_listings?: number;
+          total_bookings_hosted?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          hosting_since?: string;
+          response_rate?: number;
+          response_time_minutes?: number;
+          is_identity_verified?: boolean;
+          is_phone_verified?: boolean;
+          payout_method?: Json | null;
+          total_earnings_cents?: number;
+          pending_earnings_cents?: number;
+          total_listings?: number;
+          total_bookings_hosted?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -285,3 +362,6 @@ export type Favorite = Database["public"]["Tables"]["favorites"]["Row"];
 export type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"];
 export type Payment = Database["public"]["Tables"]["payments"]["Row"];
 export type AvailabilityBlock = Database["public"]["Tables"]["availability_blocks"]["Row"];
+// New types
+export type UserRoleRow = Database["public"]["Tables"]["user_roles"]["Row"];
+export type HostProfile = Database["public"]["Tables"]["host_profiles"]["Row"];

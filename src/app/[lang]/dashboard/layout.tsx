@@ -1,8 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { DashboardSidebar } from "@/shared/components/layout/dashboard-sidebar";
 import { Menu } from "lucide-react";
+import { useProfile } from "@/features/dashboard/hooks";
+
+function getLocaleFromPathname(pathname: string): string {
+  const match = pathname.match(/^\/(en|fr|de)(\/|$)/);
+  return match?.[1] ?? "en";
+}
 
 export default function DashboardLayout({
   children,
@@ -11,6 +18,17 @@ export default function DashboardLayout({
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const locale = getLocaleFromPathname(pathname);
+  const { profile, loading } = useProfile();
+
+  // Check if profile is complete, redirect to onboarding if not
+  useEffect(() => {
+    if (!loading && profile && !profile.is_complete && !pathname.includes("/onboarding")) {
+      router.push(`/${locale}/dashboard/onboarding`);
+    }
+  }, [loading, profile, pathname, router, locale]);
 
   // Persist sidebar state
   useEffect(() => {
@@ -29,6 +47,20 @@ export default function DashboardLayout({
   // Close mobile sidebar on route change
   function handleMobileClose() {
     setMobileOpen(false);
+  }
+
+  // Don't render layout while checking profile
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Don't render sidebar on onboarding page
+  if (pathname.includes("/onboarding")) {
+    return <>{children}</>;
   }
 
   return (
