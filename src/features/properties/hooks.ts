@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/shared/lib/supabase/client";
-import type { Property, Profile } from "@/shared/types/database";
+import { supabase } from "@/features/auth/services";
+import type { Property } from "@/shared/types/database";
 
 // ─── Get current user's profile ID ───
 async function getProfileId(): Promise<string | null> {
-  const supabase = createClient();
   const { data: authData } = await supabase.auth.getUser();
   if (!authData.user) return null;
   const { data: profile } = await supabase
@@ -31,7 +30,6 @@ export function useListings() {
         setLoading(false);
         return;
       }
-      const supabase = createClient();
       const { data } = await supabase
         .from("properties")
         .select("*")
@@ -58,7 +56,6 @@ export function useListing(id: string) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const supabase = createClient();
       const { data } = await supabase
         .from("properties")
         .select("*")
@@ -99,7 +96,6 @@ export async function createListing(input: {
   image_urls?: string[];
   slug: string;
 }): Promise<Property> {
-  const supabase = createClient();
   const profileId = await getProfileId();
   if (!profileId) throw new Error("Not authenticated");
 
@@ -121,7 +117,6 @@ export async function updateListing(
   id: string,
   input: Partial<Property>
 ): Promise<Property> {
-  const supabase = createClient();
   const { data, error } = await supabase
     .from("properties")
     .update(input)
@@ -135,14 +130,12 @@ export async function updateListing(
 
 // ─── Delete listing ───
 export async function deleteListing(id: string): Promise<void> {
-  const supabase = createClient();
   const { error } = await supabase.from("properties").delete().eq("id", id);
   if (error) throw error;
 }
 
 // ─── Toggle publish status ───
 export async function togglePublish(id: string, isPublished: boolean): Promise<void> {
-  const supabase = createClient();
   const { error } = await supabase
     .from("properties")
     .update({ is_published: isPublished })
@@ -165,7 +158,6 @@ export function useSearchListings(filters?: {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const supabase = createClient();
       let query = supabase
         .from("properties")
         .select("*")

@@ -12,9 +12,13 @@ import {
   Settings,
   Plus,
   LogOut,
+  User,
 } from "lucide-react";
 import { signOut } from "@/features/auth/services";
 import { useRouter } from "next/navigation";
+import { useProfile, becomeHost } from "@/features/dashboard/hooks";
+import { useState } from "react";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 function getLocaleFromPathname(pathname: string): string {
   const match = pathname.match(/^\/(en|fr|de)(\/|$)/);
@@ -35,8 +39,9 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const locale = getLocaleFromPathname(pathname);
+  const { profile, loading: profileLoading } = useProfile();
+  const isHost = profile?.is_host ?? false;
 
-  // Determine active nav item by checking if pathname starts with the href
   function isActive(href: string): boolean {
     if (href === "/dashboard") {
       return pathname === `/${locale}/dashboard` || pathname === "/dashboard";
@@ -44,9 +49,23 @@ export function DashboardSidebar() {
     return pathname.startsWith(`/${locale}${href}`) || pathname.startsWith(href);
   }
 
+  const [becomingHost, setBecomingHost] = useState(false);
+
   async function handleSignOut() {
     await signOut();
     router.push(`/${locale}/auth/signin`);
+  }
+
+  async function handleBecomeHost() {
+    setBecomingHost(true);
+    try {
+      await becomeHost();
+      router.refresh();
+    } catch {
+      // silently fail
+    } finally {
+      setBecomingHost(false);
+    }
   }
 
   return (
@@ -66,6 +85,9 @@ export function DashboardSidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map((item) => {
+          // Hide Listings nav for non-hosts
+          if (item.key === "listings" && !isHost) return null;
+
           const Icon = item.icon;
           const active = isActive(item.href);
           return (
@@ -87,13 +109,24 @@ export function DashboardSidebar() {
 
       {/* Bottom actions */}
       <div className="px-3 py-4 border-t border-border space-y-1">
-        <Link
-          href={`/${locale}/dashboard/listings/new`}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary-dark transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          New Listing
-        </Link>
+        {isHost ? (
+          <Link
+            href={`/${locale}/dashboard/listings/new`}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary-dark transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            New Listing
+          </Link>
+        ) : (
+          <button
+            onClick={handleBecomeHost}
+            disabled={becomingHost}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-primary-light text-primary hover:bg-primary/10 transition-colors w-full"
+          >
+            <Home className="w-5 h-5" />
+            {becomingHost ? "Activating..." : "Become a Host"}
+          </button>
+        )}
         <button
           onClick={handleSignOut}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-mid hover:bg-light hover:text-error transition-colors w-full text-left"

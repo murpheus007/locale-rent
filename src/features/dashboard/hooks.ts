@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/shared/lib/supabase/client";
-import type { Profile, Booking, Property, Review, Favorite } from "@/shared/types/database";
+import { supabase } from "@/features/auth/services";
+import type { Profile } from "@/shared/types/database";
 
 export function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -11,7 +11,6 @@ export function useProfile() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const supabase = createClient();
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) {
         setProfile(null);
@@ -49,7 +48,6 @@ export function useDashboardStats() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const supabase = createClient();
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) {
         setLoading(false);
@@ -57,7 +55,6 @@ export function useDashboardStats() {
       }
       const userId = authData.user.id;
 
-      // Get user's profile first
       const { data: profile } = await supabase
         .from("profiles")
         .select("id, is_host")
@@ -71,23 +68,18 @@ export function useDashboardStats() {
 
       const profileId = profile.id;
 
-      // Run independent queries in parallel
       const [listingsRes, bookingsRes, reviewsRes, favoritesRes] = await Promise.all([
-        // Listings count (for hosts)
         profile.is_host
           ? supabase.from("properties").select("id", { count: "exact", head: true }).eq("host_id", profileId)
           : Promise.resolve({ count: 0 }),
-        // Active bookings (as guest or host)
         supabase
           .from("bookings")
           .select("id", { count: "exact", head: true })
           .or(`guest_id.eq.${profileId},host_id.eq.${profileId}`)
           .in("status", ["pending", "confirmed"]),
-        // Reviews received (for hosts)
         profile.is_host
           ? supabase.from("reviews").select("id", { count: "exact", head: true }).eq("host_id", profileId)
           : Promise.resolve({ count: 0 }),
-        // Favorites count
         supabase.from("favorites").select("id", { count: "exact", head: true }).eq("user_id", profileId),
       ]);
 
@@ -96,10 +88,10 @@ export function useDashboardStats() {
         activeBookings: bookingsRes.count ?? 0,
         totalReviews: reviewsRes.count ?? 0,
         totalFavorites: favoritesRes.count ?? 0,
-        unreadMessages: 0, // Will be implemented with messaging feature
+        unreadMessages: 0,
       });
     } catch {
-      // Silently fail — dashboard still renders
+      // Silently fail
     } finally {
       setLoading(false);
     }
@@ -119,7 +111,6 @@ export function useRecentActivity() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const supabase = createClient();
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) {
         setActivities([]);
@@ -141,7 +132,6 @@ export function useRecentActivity() {
 
       const profileId = profile.id;
 
-      // Get recent bookings
       const { data: bookings } = await supabase
         .from("bookings")
         .select("id, status, created_at, property_id")
@@ -178,4 +168,24 @@ export function useRecentActivity() {
   useEffect(() => { load(); }, [load]);
 
   return { activities, loading, refetch: load };
+}
+
+// ─── Become a host ───
+export async function becomeHost(): Promise<void> {
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) throw new Error("Not authenticated");
+
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .update({ is_host: true, role: "host" })
+    .eq("user_id", authData.user.id);
+
+  if (profileError) throw new Error(profileError.message);
+
+  // Also update user_metadata
+  const { error: metaError } = await supabase.auth.updateUser({
+    data: { role: "host" },
+  });
+
+  if (metaError) throw new Error(metaError.message);
 }

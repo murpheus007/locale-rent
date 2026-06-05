@@ -278,6 +278,26 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Become a Host card (for guests) */}
+      {!isHost && (
+        <Card className="border-primary/20 bg-primary-light/30">
+          <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex-1">
+              <h3 className="font-semibold text-dark text-sm">Ready to start hosting?</h3>
+              <p className="text-mid text-sm mt-0.5">
+                List your property and start earning. It only takes a few minutes.
+              </p>
+            </div>
+            <Link href={`/${locale}/dashboard/settings`}>
+              <Button size="sm" className="gap-2">
+                Become a Host
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Profile completion card (if profile is incomplete) */}
       {profile && !profile.bio && (
         <Card className="border-accent/30 bg-accent-light/30">
